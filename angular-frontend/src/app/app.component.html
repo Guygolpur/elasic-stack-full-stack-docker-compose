@@ -1,0 +1,11 @@
+<div>
+  <input type="text" [(ngModel)]="newName.firstName" placeholder="First Name">
+  <input type="text" [(ngModel)]="newName.lastName" placeholder="Last Name">
+  <button (click)="addName()">Add Name</button>
+</div>
+
+<button (click)="deleteName()">Delete Name</button>
+
+<div *ngFor="let name of names">
+  {{ name.firstName }} {{ name.lastName }}
+</div>
