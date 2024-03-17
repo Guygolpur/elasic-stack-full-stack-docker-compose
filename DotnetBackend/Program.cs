@@ -24,6 +24,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Apply database migrations
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate(); // This will apply the EF Core migrations
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
