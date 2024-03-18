@@ -122,6 +122,13 @@ services:
       timeout: 10s
       retries: 120
 
+  package-registry:
+    image: docker.elastic.co/package-registry/distribution:8.8.2
+    ports:
+      - "8080:8080"
+    restart: always
+
+
   kibana:
     depends_on:
       es01:
@@ -200,6 +207,7 @@ services:
         - KIBANA_FLEET_USERNAME=elastic
         - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
         - KIBANA_HOST=https://kibana:5601
+        - FLEET_PACKAGE_REGISTRY_URL=http://package-registry:8080
 
   angular-frontend:
     image: es-cluster-angular-frontend:latest
