@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using DOTNETBACKEND.Data;
-using Elastic.Apm.NetCoreAll;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,8 +36,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseAllElasticApm(app.Configuration);
 
 app.UseCors("AllowSpecificOrigin");
 
