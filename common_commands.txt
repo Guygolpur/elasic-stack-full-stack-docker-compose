@@ -8,17 +8,14 @@ cd ../
 
 ################################ In order to work offline, convert to tar.gz: ################################
 
-docker pull docker.elastic.co/package-registry/distribution:8.8.2
-docker save -o package-registry-8.8.2.tar docker.elastic.co/package-registry/distribution:8.8.2
-
 docker pull docker.elastic.co/elasticsearch/elasticsearch:8.8.2
 docker pull docker.elastic.co/kibana/kibana:8.8.2
-docker pull docker.elastic.co/beats/elastic-agent:8.8.2
+docker pull docker.elastic.co/apm/apm-server:8.8.2
 docker pull postgres:latest
 
 docker save docker.elastic.co/elasticsearch/elasticsearch:8.8.2 | gzip > elasticsearch-8.8.2.tar.gz
 docker save docker.elastic.co/kibana/kibana:8.8.2 | gzip > kibana-8.8.2.tar.gz
-docker save docker.elastic.co/beats/elastic-agent:8.8.2 | gzip > elastic-agent-8.8.2.tar.gz
+docker save docker.elastic.co/apm/apm-server:8.8.2 | gzip > apm-server-8.8.2.tar.gz
 docker save postgres:latest | gzip > postgres-latest.tar.gz
 
 cd ./DotnetBackend
@@ -39,13 +36,10 @@ cd ../
 
 ################################ Then, in the remote offline server execute the commands: ################################
 
-docker load -i package-registry-8.8.2.tar
-docker run -d -p 8080:8080 docker.elastic.co/package-registry/distribution:8.8.2
-
 gzip -d < postgres-latest.tar.gz | docker load
 gzip -d < kibana-8.8.2.tar.gz | docker load
+gzip -d < apm-server-8.8.2.tar.gz | docker load
 gzip -d < elasticsearch-8.8.2.tar.gz | docker load
-gzip -d < elastic-agent-8.8.2.tar.gz | docker load
 cd ./angular-frontend
 gzip -d < es-cluster-angular-frontend-latest.tar.gz | docker load
 gzip -d < node-latest.tar.gz | docker load

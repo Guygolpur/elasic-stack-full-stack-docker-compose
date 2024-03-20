@@ -5,7 +5,6 @@ elastic:
     secretToken: ${ELASTIC_APM_SECRET_TOKEN}
 server.host: "0.0.0.0"
 telemetry.enabled: "true"
-xpack.fleet.registryProxyUrl: "http://package-registry:8080"
 xpack.fleet.packages:
   - name: fleet_server
     version: latest
