@@ -12,9 +12,9 @@ volumes:
     driver: local
 
 networks:
-  elastic:
+  default:
     name: elastic
-    driver: bridge
+    external: false
 
 services:
   setup:
@@ -77,8 +77,7 @@ services:
       interval: 1s
       timeout: 5s
       retries: 120
-    networks:
-      - elastic
+
 
   es01:
     depends_on:
@@ -123,15 +122,11 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
-    networks:
-      - elastic
 
   package-registry:
     image: docker.elastic.co/package-registry/distribution:8.8.2
     ports:
       - "8080:8080"
-    networks:
-      - elastic
 
   kibana:
     depends_on:
@@ -173,51 +168,47 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
-    networks:
-      - elastic
 
   fleet-server:
-      depends_on:
-        kibana:
-          condition: service_healthy
-        es01:
-          condition: service_healthy
-      image: docker.elastic.co/beats/elastic-agent:8.8.2
-      volumes:
-        - certs:/certs
-        - fleetserverdata:/usr/share/elastic-agent
-        - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
-        - "/var/run/docker.sock:/var/run/docker.sock:ro"
-        - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
-        - "/proc:/hostfs/proc:ro"
-        - "/:/hostfs:ro"
-      ports:
-        - ${FLEET_PORT}:8220
-        - ${APMSERVER_PORT}:8200
-      user: root
-      environment:
-        - SSL_CERTIFICATE_AUTHORITIES=/certs/ca/ca.crt
-        - CERTIFICATE_AUTHORITIES=/certs/ca/ca.crt
-        - FLEET_CA=/certs/ca/ca.crt
-        - FLEET_ENROLL=1
-        - FLEET_INSECURE=true
-        - FLEET_SERVER_ELASTICSEARCH_CA=/certs/ca/ca.crt
-        - FLEET_SERVER_ELASTICSEARCH_HOST=https://es01:9200
-        - FLEET_SERVER_ELASTICSEARCH_INSECURE=true
-        - FLEET_SERVER_ENABLE=1
-        - FLEET_SERVER_CERT=/certs/fleet-server/fleet-server.crt
-        - FLEET_SERVER_CERT_KEY=/certs/fleet-server/fleet-server.key
-        - FLEET_SERVER_INSECURE_HTTP=true
-        - FLEET_SERVER_POLICY_ID=fleet-server-policy
-        - FLEET_URL=https://fleet-server:8220
-        - KIBANA_FLEET_CA=/certs/ca/ca.crt
-        - KIBANA_FLEET_SETUP=1
-        - KIBANA_FLEET_USERNAME=elastic
-        - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
-        - KIBANA_HOST=https://kibana:5601
-        - FLEET_PACKAGE_REGISTRY_URL=http://package-registry:8080
-      networks:
-        - elastic
+    depends_on:
+      kibana:
+        condition: service_healthy
+      es01:
+        condition: service_healthy
+    image: docker.elastic.co/beats/elastic-agent:8.8.2
+    volumes:
+      - certs:/certs
+      - fleetserverdata:/usr/share/elastic-agent
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+      - "/proc:/hostfs/proc:ro"
+      - "/:/hostfs:ro"
+    ports:
+      - ${FLEET_PORT}:8220
+      - ${APMSERVER_PORT}:8200
+    user: root
+    environment:
+      - SSL_CERTIFICATE_AUTHORITIES=/certs/ca/ca.crt
+      - CERTIFICATE_AUTHORITIES=/certs/ca/ca.crt
+      - FLEET_CA=/certs/ca/ca.crt
+      - FLEET_ENROLL=1
+      - FLEET_INSECURE=true
+      - FLEET_SERVER_ELASTICSEARCH_CA=/certs/ca/ca.crt
+      - FLEET_SERVER_ELASTICSEARCH_HOST=https://es01:9200
+      - FLEET_SERVER_ELASTICSEARCH_INSECURE=true
+      - FLEET_SERVER_ENABLE=1
+      - FLEET_SERVER_CERT=/certs/fleet-server/fleet-server.crt
+      - FLEET_SERVER_CERT_KEY=/certs/fleet-server/fleet-server.key
+      - FLEET_SERVER_INSECURE_HTTP=true
+      - FLEET_SERVER_POLICY_ID=fleet-server-policy
+      - FLEET_URL=https://fleet-server:8220
+      - KIBANA_FLEET_CA=/certs/ca/ca.crt
+      - KIBANA_FLEET_SETUP=1
+      - KIBANA_FLEET_USERNAME=elastic
+      - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_HOST=https://kibana:5601
+      - FLEET_PACKAGE_REGISTRY_URL=http://package-registry:8080
 
   angular-frontend:
     image: es-cluster-angular-frontend:latest
@@ -226,8 +217,6 @@ services:
       # context: ./angular-frontend
     ports:
       - "4200:80"
-    networks:
-      - elastic
 
   # .NET Backend
   dotnet-backend:
@@ -248,8 +237,6 @@ services:
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
       - "/:/hostfs:ro"
-    networks:
-      - elastic
 
   # PostgreSQL Database
   app_db:
@@ -264,7 +251,5 @@ services:
     restart: always
     volumes:
       - app_data:/var/lib/postgresql/data
-    networks:
-      - elastic
 
 #
