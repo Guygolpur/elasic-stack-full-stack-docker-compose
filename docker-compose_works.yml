@@ -8,15 +8,17 @@ volumes:
     driver: local
   fleetserverdata:
     driver: local
+  app_data:
+    driver: local
 
 networks:
-  default:
+  elastic:
     name: elastic
     external: false
 
 services:
   setup:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
@@ -80,7 +82,7 @@ services:
     depends_on:
       setup:
         condition: service_healthy
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
     labels:
       co.elastic.logs/module: elasticsearch
     volumes:
@@ -120,11 +122,12 @@ services:
       timeout: 10s
       retries: 120
 
+
   kibana:
     depends_on:
       es01:
         condition: service_healthy
-    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    image: docker.elastic.co/kibana/kibana:8.8.2
     labels:
       co.elastic.logs/module: kibana
     volumes:
@@ -148,6 +151,8 @@ services:
       - SERVER_SSL_KEY=config/certs/kibana/kibana.key
       - SERVER_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
       - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - XPACK_FLEET_REGISTRYURL=http://package-registry:8080
+      - NODE_EXTRA_CA_CERTS=/usr/share/kibana/config/certs/ca/ca.crt
     mem_limit: ${KB_MEM_LIMIT}
     healthcheck:
       test:
@@ -165,7 +170,7 @@ services:
           condition: service_healthy
         es01:
           condition: service_healthy
-      image: docker.elastic.co/beats/elastic-agent:${STACK_VERSION}
+      image: docker.elastic.co/beats/elastic-agent:8.8.2
       volumes:
         - certs:/certs
         - fleetserverdata:/usr/share/elastic-agent
@@ -198,23 +203,48 @@ services:
         - KIBANA_FLEET_USERNAME=elastic
         - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
         - KIBANA_HOST=https://kibana:5601
+        - FLEET_PACKAGE_REGISTRY_URL=http://package-registry:8080
 
   angular-frontend:
-    build:
-      context: ./angular-frontend
+    image: es-cluster-angular-frontend:latest
+    # image: guygolpur/es-cluster-angular-frontend
+    # build:
+      # context: ./angular-frontend
     ports:
-      - "4200:4200"
+      - "4200:80"
 
+  # .NET Backend
   dotnet-backend:
-    build:
-      context: ./DotnetBackend
+    depends_on:
+      - app_db
+    # build:
+      # context: ./DotnetBackend
+    # image: guygolpur/es-cluster-dotnet-backend
+    image: es-cluster-dotnet-backend:latest
+    environment:
+      - ConnectionStrings__DefaultConnection=User ID=myuser;Password=mypassword;Server=app_db;Port=5432;Database=mydb;
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - 5290:80
     volumes:
       - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
       - "/:/hostfs:ro"
-    ports:
-      - "5290:5290"
 
-      
+  # PostgreSQL Database
+  app_db:
+    image: postgres:latest
+    container_name: app_db
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydb
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - app_data:/var/lib/postgresql/data
+
+#

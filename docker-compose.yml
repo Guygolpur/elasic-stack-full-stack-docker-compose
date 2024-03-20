@@ -14,7 +14,7 @@ volumes:
 networks:
   elastic:
     name: elastic
-    external: false
+    driver: bridge
 
 services:
   setup:
@@ -77,6 +77,8 @@ services:
       interval: 1s
       timeout: 5s
       retries: 120
+    networks:
+      - elastic
 
   es01:
     depends_on:
@@ -121,13 +123,15 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    networks:
+      - elastic
 
   package-registry:
     image: docker.elastic.co/package-registry/distribution:8.8.2
     ports:
       - "8080:8080"
-    restart: always
-
+    networks:
+      - elastic
 
   kibana:
     depends_on:
@@ -157,6 +161,8 @@ services:
       - SERVER_SSL_KEY=config/certs/kibana/kibana.key
       - SERVER_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
       - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - XPACK_FLEET_REGISTRYURL=http://package-registry:8080
+      - NODE_EXTRA_CA_CERTS=/usr/share/kibana/config/certs/ca/ca.crt
     mem_limit: ${KB_MEM_LIMIT}
     healthcheck:
       test:
@@ -167,6 +173,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    networks:
+      - elastic
 
   fleet-server:
       depends_on:
@@ -208,6 +216,8 @@ services:
         - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
         - KIBANA_HOST=https://kibana:5601
         - FLEET_PACKAGE_REGISTRY_URL=http://package-registry:8080
+      networks:
+        - elastic
 
   angular-frontend:
     image: es-cluster-angular-frontend:latest
@@ -216,6 +226,8 @@ services:
       # context: ./angular-frontend
     ports:
       - "4200:80"
+    networks:
+      - elastic
 
   # .NET Backend
   dotnet-backend:
@@ -236,6 +248,8 @@ services:
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
       - "/:/hostfs:ro"
+    networks:
+      - elastic
 
   # PostgreSQL Database
   app_db:
@@ -250,5 +264,7 @@ services:
     restart: always
     volumes:
       - app_data:/var/lib/postgresql/data
+    networks:
+      - elastic
 
 #
