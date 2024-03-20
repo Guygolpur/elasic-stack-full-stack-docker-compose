@@ -11,9 +11,9 @@ cd ../
 docker pull docker.elastic.co/elasticsearch/elasticsearch:8.8.2
 docker pull docker.elastic.co/kibana/kibana:8.8.2
 docker pull docker.elastic.co/beats/elastic-agent:8.8.2
-docker pull docker.elastic.co/package-registry/distribution:lite-8.8.2
+docker pull docker.elastic.co/package-registry/distribution:8.8.2
 
-docker save -o package-registry-8.8.2.tar docker.elastic.co/package-registry/distribution:lite-8.8.2
+docker save -o package-registry-8.8.2.tar docker.elastic.co/package-registry/distribution:8.8.2
 docker save docker.elastic.co/elasticsearch/elasticsearch:8.8.2 | gzip > elasticsearch-8.8.2.tar.gz
 docker save docker.elastic.co/kibana/kibana:8.8.2 | gzip > kibana-8.8.2.tar.gz
 docker save docker.elastic.co/beats/elastic-agent:8.8.2 | gzip > elastic-agent-8.8.2.tar.gz
